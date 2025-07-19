@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processador de NFe XML</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Processador de NFe XML</h1>
+        <div class="controls">
+            <input type="file" id="xmlFile" accept=".xml" />
+            <button id="processBtn">Processar XML</button>
+        </div>
+        <div id="results">
+            <div id="nfeInfo"></div>
+            <div class="table-container">
+                <table id="productsTable">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>EAN</th>
+                            <th>Descrição Completa</th>
+                            <th>NCM</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsBody">
+                        <!-- Os produtos serão inseridos aqui -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="message"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
