@@ -1,5 +1,30 @@
 document.getElementById('processBtn').addEventListener('click', processXML);
 
+function generateEAN13(codigo, cfop, ncm) {
+    // Garante que temos valores para trabalhar
+    codigo = codigo || '000000';
+    cfop = cfop || '0000';
+    ncm = ncm || '00000000';
+    
+    // Combina os valores para formar a base do EAN
+    let base = codigo.padStart(6, '0') + 
+               cfop.padStart(4, '0') + 
+               ncm.padStart(8, '0').substring(0, 2);
+    
+    // Garante que temos 12 dígitos
+    base = base.padStart(12, '0').substring(0, 12);
+    
+    // Calcula o dígito verificador (EAN-13)
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+        const digit = parseInt(base[i]);
+        sum += (i % 2 === 0) ? digit : digit * 3;
+    }
+    const checksum = (10 - (sum % 10)) % 10;
+    
+    return base + checksum.toString();
+}
+
 function processXML() {
     const fileInput = document.getElementById('xmlFile');
     const file = fileInput.files[0];
@@ -103,7 +128,7 @@ function processProducts(xmlDoc) {
     `;
     nfeInfoDiv.appendChild(nfeInfo);
     
-    // Segunda passada: criar a tabela com destaque para repetidos
+    // Segunda passada: criar a tabela
     for (let i = 0; i < itens.length; i++) {
         const item = itens[i];
         const produto = item.getElementsByTagNameNS(ns, "prod")[0];
@@ -111,10 +136,18 @@ function processProducts(xmlDoc) {
         
         const rawCode = produto.getElementsByTagNameNS(ns, "cProd")[0]?.textContent || '';
         const codigo = normalizeCode(rawCode);
-        const ean = produto.getElementsByTagNameNS(ns, "cEAN")[0]?.textContent || '';
+        let ean = produto.getElementsByTagNameNS(ns, "cEAN")[0]?.textContent || '';
         const ncm = produto.getElementsByTagNameNS(ns, "NCM")[0]?.textContent || '';
+        const cfop = produto.getElementsByTagNameNS(ns, "CFOP")[0]?.textContent || '';
         
-        // Descrição completa (mantendo informações de cor)
+        // Gerar EAN13 quando for SEM GTIN
+        let isGeneratedEan = false;
+        if (ean === 'SEM GTIN' || ean === '') {
+            ean = generateEAN13(rawCode, cfop, ncm);
+            isGeneratedEan = true;
+        }
+        
+        // Descrição completa
         const descricaoPrincipal = produto.getElementsByTagNameNS(ns, "xProd")[0]?.textContent || '';
         const infAdProd = item.getElementsByTagNameNS(ns, "infAdProd")[0]?.textContent || '';
         const descricaoCompleta = [descricaoPrincipal, infAdProd]
@@ -123,29 +156,29 @@ function processProducts(xmlDoc) {
         
         const row = document.createElement('tr');
         
-        // Verifica se é duplicado (não a primeira ocorrência)
+        // Verifica se é duplicado
         const isDuplicate = duplicates.has(codigo) && codigosTracker[codigo].lines[0] !== i;
         if (isDuplicate) {
             row.classList.add('duplicate');
             row.title = `Código duplicado: ${codigo} (original na linha ${codigosTracker[codigo].lines[0] + 1})`;
         }
         
-        // Código normalizado
+        // Células da tabela
         const codigoCell = document.createElement('td');
         codigoCell.textContent = codigo;
         row.appendChild(codigoCell);
         
-        // EAN
         const eanCell = document.createElement('td');
         eanCell.textContent = ean;
+        if (isGeneratedEan) {
+            eanCell.classList.add('generated-ean');
+        }
         row.appendChild(eanCell);
         
-        // Descrição completa (com informações de cor)
         const descricaoCell = document.createElement('td');
         descricaoCell.textContent = descricaoCompleta;
         row.appendChild(descricaoCell);
         
-        // NCM
         const ncmCell = document.createElement('td');
         ncmCell.textContent = ncm;
         row.appendChild(ncmCell);

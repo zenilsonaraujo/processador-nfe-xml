@@ -98,7 +98,7 @@ button:hover {
 #productsTable {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 15px;
 }
 
 #productsTable th {
@@ -146,8 +146,8 @@ button:hover {
 #productsTable td:nth-child(2) { /* EAN */
     text-align: center;
     font-family: 'Courier New', monospace;
-    color: #333; /* Alterado de #7f8c8d para #333 */
-    font-weight: bold; /* Adicionado para melhorar a legibilidade */
+    color: #333;
+    font-weight: bold;
 }
 
 #productsTable td:nth-child(3) { /* Descrição */
@@ -159,8 +159,8 @@ button:hover {
 #productsTable td:nth-child(4) { /* NCM */
     text-align: center;
     font-family: 'Courier New', monospace;
-    color: #333; /* Alterado de #34495e para #333 */
-    font-weight: bold; /* Adicionado para melhorar a legibilidade */
+    color: #333;
+    font-weight: bold;
 }
 
 #productsTable tr:hover {
@@ -192,6 +192,19 @@ button:hover {
     background-color: #fff3cd;
     color: #856404;
     border: 1px solid #ffecb5;
+}
+
+/* Estilos para EAN gerado */
+#productsTable td.generated-ean {
+    color: #0066cc;
+    font-weight: bold;
+}
+
+#productsTable td.generated-ean::after {
+    content: " (gerado)";
+    font-size: 0.8em;
+    color: #666;
+    font-weight: normal;
 }
 
 @media (max-width: 768px) {
