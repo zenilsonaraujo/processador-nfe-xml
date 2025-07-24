@@ -18,10 +18,10 @@ Esta é uma aplicação web que processa arquivos XML de Nota Fiscal Eletrônica
 
 ## Tecnologias utilizadas
 
-- HTML5
-- CSS3
-- JavaScript (Vanilla JS)
+- HTML
+- CSS
+- JavaScript
 
 ## Observações
 
-Esta aplicação funciona totalmente no lado do cliente (browser), sem necessidade de servidor ou backend.
+Esta aplicação funciona totalmente no lado do cliente (browser), sem necessidade de servidor.
