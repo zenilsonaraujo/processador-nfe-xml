@@ -1,3 +1,6 @@
+// Objeto para armazenar os códigos copiados permanentemente
+let copiedCodes = new Set();
+
 document.getElementById('processBtn').addEventListener('click', processXML);
 
 function generateEAN13(codigo, cfop, ncm) {
@@ -23,6 +26,54 @@ function generateEAN13(codigo, cfop, ncm) {
     const checksum = (10 - (sum % 10)) % 10;
     
     return base + checksum.toString();
+}
+
+function copyBarcode(ean, button, row, codigo) {
+    navigator.clipboard.writeText(ean).then(() => {
+        // Marcar como copiado permanentemente
+        copiedCodes.add(codigo);
+        
+        // Adicionar classe permanente na linha
+        row.classList.remove('copied');
+        row.classList.add('copied-permanent');
+        
+        // Atualizar o botão para estado permanente
+        button.innerHTML = '<i class="fas fa-check"></i><span>Copiado</span>';
+        button.className = 'copy-btn copied-permanent';
+        
+        // Adicionar contador de cópias (opcional)
+        const copyCount = button.querySelector('.copy-count');
+        if (!copyCount) {
+            const countSpan = document.createElement('span');
+            countSpan.className = 'copied-count';
+            countSpan.textContent = '✓';
+            button.appendChild(countSpan);
+        }
+        
+        // Feedback adicional
+        showCopiedMessage(`✓ Código EAN ${ean} copiado! (Linha mantida em verde)`);
+        
+        // Adicionar tooltip informativo
+        row.title = `Código copiado em: ${new Date().toLocaleTimeString('pt-BR')}`;
+        
+    }).catch(err => {
+        console.error('Erro ao copiar: ', err);
+        showMessage('Erro ao copiar o código. Tente novamente.', 'error');
+    });
+}
+
+function showCopiedMessage(message) {
+    const messageDiv = document.getElementById('message');
+    messageDiv.textContent = message;
+    messageDiv.className = 'success';
+    
+    // Remove a mensagem após 3 segundos
+    setTimeout(() => {
+        if (messageDiv.textContent === message) {
+            messageDiv.textContent = '';
+            messageDiv.className = '';
+        }
+    }, 3000);
 }
 
 function processXML() {
@@ -125,6 +176,8 @@ function processProducts(xmlDoc) {
         <p><strong>Data Emissão:</strong> ${formatDate(nfeData.dataEmissao)}</p>
         <p><strong>Emitente:</strong> ${nfeData.emitente}</p>
         ${duplicates.size > 0 ? `<p class="warning"><strong>Atenção:</strong> ${duplicates.size} códigos duplicados encontrados</p>` : ''}
+        <p><small><i class="fas fa-copy"></i> As linhas copiadas permanecerão verdes até processar outra nota</small></p>
+        ${copiedCodes.size > 0 ? `<p><small><i class="fas fa-check-circle" style="color: #27ae60;"></i> ${copiedCodes.size} códigos copiados nesta sessão</small></p>` : ''}
     `;
     nfeInfoDiv.appendChild(nfeInfo);
     
@@ -163,11 +216,19 @@ function processProducts(xmlDoc) {
             row.title = `Código duplicado: ${codigo} (original na linha ${codigosTracker[codigo].lines[0] + 1})`;
         }
         
-        // Células da tabela
+        // Verifica se o código já foi copiado anteriormente
+        const wasCopied = copiedCodes.has(codigo);
+        if (wasCopied) {
+            row.classList.add('copied-permanent');
+            row.title = `Código copiado anteriormente`;
+        }
+        
+        // Célula do Código
         const codigoCell = document.createElement('td');
         codigoCell.textContent = codigo;
         row.appendChild(codigoCell);
         
+        // Célula do EAN
         const eanCell = document.createElement('td');
         eanCell.textContent = ean;
         if (isGeneratedEan) {
@@ -175,10 +236,24 @@ function processProducts(xmlDoc) {
         }
         row.appendChild(eanCell);
         
+        // Célula das Ações (com botão de copiar)
+        const actionsCell = document.createElement('td');
+        const copyButton = document.createElement('button');
+        copyButton.className = wasCopied ? 'copy-btn copied-permanent' : 'copy-btn';
+        copyButton.innerHTML = wasCopied 
+            ? '<i class="fas fa-check"></i><span>Copiado</span><span class="copy-count">✓</span>'
+            : '<i class="far fa-copy"></i><span>Copiar</span>';
+        copyButton.title = `Copiar código EAN: ${ean}`;
+        copyButton.onclick = () => copyBarcode(ean, copyButton, row, codigo);
+        actionsCell.appendChild(copyButton);
+        row.appendChild(actionsCell);
+        
+        // Célula da Descrição
         const descricaoCell = document.createElement('td');
         descricaoCell.textContent = descricaoCompleta;
         row.appendChild(descricaoCell);
         
+        // Célula do NCM
         const ncmCell = document.createElement('td');
         ncmCell.textContent = ncm;
         row.appendChild(ncmCell);
@@ -207,5 +282,4 @@ function showMessage(message, type) {
     const messageDiv = document.getElementById('message');
     messageDiv.textContent = message;
     messageDiv.className = type;
-    messageDiv.scrollIntoView({ behavior: 'smooth' });
 }
